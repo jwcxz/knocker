@@ -10,7 +10,7 @@ host=my.awesome.server.com
 port=22
 command=ssh %host
 openseq=1234,5678,9123
-closeseq=2345,6789,1111
+closeseq=1111,2222,3333
 ```
 
 Then, just run ```knocker.py```.  You can also run ```knocker.py -h``` to find
