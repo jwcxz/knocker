@@ -1,8 +1,7 @@
 knocker
 =======
 
-Knocker is a simple port knocker written in Python.  To configure it, make a
-```~/.knocker```:
+Knocker is a simple port knocker written in Python.  To configure it, make a ```~/.knocker```:
 
 ```
 [config]
