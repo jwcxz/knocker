@@ -9,9 +9,6 @@ class Knocker:
         self.openseq = openseq;
         self.closeseq = closeseq;
 
-        self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
-        self.skt.settimeout(.1);
-
     def is_open(self):
         return self.knock(self.target_port);
     
@@ -24,12 +21,12 @@ class Knocker:
             self.knock(port);
 
     def knock(self, port):
+        skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
         try:
-            self.skt.connect( (self.host, port) );
-            time.sleep(.1);
-            self.skt.shutdown(2);
+            skt.connect( (self.host, port) );
+            skt.shutdown(2);
             return True;
-        except:
+        except socket.error:
             return False;
 
 
@@ -72,37 +69,41 @@ if __name__ == "__main__":
 
     p.add_argument('-r', '--command', action='store', type=str,
             dest='command', default=cfg['command'], help="command to run");
-    
-    p.add_argument('-o', '--open-seq', action='store', type=int, nargs='+',
-            dest='openseq', default=cfg['openseq'], help="open sequence");
-    
-    p.add_argument('-c', '--close-seq', action='store', type=int, nargs='+',
-            dest='closeseq', default=cfg['closeseq'], help="close sequence");
 
-    p.add_argument('-O', '--no-open', action='store_false', default=True,
-            dest='doopen', help="don't try to open the port");
+    for oc in ('open', 'close'):
+        p.add_argument("-%s" %oc[0], "--only-%s" %oc,
+                action='store_true', default=False,
+                dest="only%s" %oc,
+                help="only %s the port, nothing else" %oc);
+        
+        p.add_argument("-%s" %oc[0].upper(), "--no-%s" %oc,
+                action='store_false', default=True,
+                dest="do%s" %oc,
+                help="don't try to %s the port" %oc);
     
-    p.add_argument('-C', '--no-close', action='store_false', default=True,
-            dest='doclose', help="don't try to close the port");
+        p.add_argument("-%s" %{'open':'s', 'close':'e'}[oc], '--%s-seq' %oc,
+                action='store', type=int, nargs='+',
+                dest="%sseq" %oc,
+                default=cfg["%sseq" %oc],
+                help="open sequence");
     
     args = p.parse_args();
 
     # start knocking
     knocker = Knocker(args.host, args.port, args.openseq, args.closeseq);
     
-    if args.doopen and not knocker.is_open():
+    if not args.onlyclose and args.doopen and not knocker.is_open():
         print "\033[92m  -> opening ports...",
         knocker.open();
         print "done\033[0m"
 
-    print "  \033[92m-> starting command...\033[0m"
-    
     # run command
-    subprocess.call(args.command, shell=True);
-    
-    print "  \033[92m-> command done\033[0m"
+    if not args.onlyopen and not args.onlyclose:
+        print "  \033[92m-> starting command...\033[0m"
+        subprocess.call(args.command, shell=True);
+        print "  \033[92m-> command done\033[0m"
 
-    if args.doclose:
+    if not args.onlyopen and args.doclose:
         print "  \033[92m-> closing ports...",
         knocker.close();
         print "done\033[0m"
