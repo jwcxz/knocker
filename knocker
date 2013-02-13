@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import argparse, ConfigParser, os, socket, subprocess
+import argparse, ConfigParser, os, socket, subprocess, time
 
 class Knocker:
     def __init__(self, host, target_port, openseq, closeseq):
@@ -10,23 +10,23 @@ class Knocker:
         self.closeseq = closeseq;
 
         self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
+        self.skt.settimeout(.1);
 
     def is_open(self):
         return self.knock(self.target_port);
     
     def open(self):
-        print self.openseq;
         for port in self.openseq:
             self.knock(port);
             
     def close(self):
-        print self.closeseq;
         for port in self.closeseq:
             self.knock(port);
 
     def knock(self, port):
         try:
             self.skt.connect( (self.host, port) );
+            time.sleep(.1);
             self.skt.shutdown(2);
             return True;
         except:
